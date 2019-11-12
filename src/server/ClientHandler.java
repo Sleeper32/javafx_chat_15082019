@@ -10,7 +10,7 @@ public class ClientHandler {
     private Socket socket;
     DataInputStream in;
     DataOutputStream out;
-    String nick;
+    String login;
 
     public ClientHandler(Server server, Socket socket) {
         try {
@@ -34,13 +34,15 @@ public class ClientHandler {
                         String str = in.readUTF();
                         if (str.startsWith("/auth ")) {
                             String[] token = str.split(" ");
-//                            String[] token = str.split(" +",3);
-                            String newNick = AuthService.getNickByLoginAndPass(token[1], token[2]);
-                            if (newNick != null) {
+                            String enteredLogin = token[1];
+                            String enteredPass = token[2];
+
+                            Integer userId = AuthService.getUserIdByLoginAndPass(enteredLogin, enteredPass);
+                            if (userId != null) {
                                 sendMSG("/authok");
-                                nick = newNick;
+                                login = enteredLogin;
                                 server.subscribe(this);
-                                System.out.println("Клиент " + nick + " авторизовался");
+                                System.out.println("Клиент " + login + " авторизовался");
                                 break;
                             } else {
                                 sendMSG("Неверный логин / пароль");
@@ -59,10 +61,22 @@ public class ClientHandler {
                             String userName = info[1];
                             String msg = info[2];
 
-                            server.personalMsg(userName, nick + " : " + msg);
+                            server.personalMsg(userName, login + " : " + msg);
+                        }
+                        else if (str.startsWith("/rename")) {
+                            String[] info = str.split(" ");
+                            String newLogin = info[1];
+
+                            if (AuthService.renameUser(login, newLogin)) {
+                                server.personalMsg(login, "server: Логин изменен");
+                                login = newLogin;
+                            }
+                            else {
+                                server.personalMsg(login, "server: Данный логин уже используется");
+                            }
                         }
                         else {
-                            server.broadcastMsg(nick + " : " + str);
+                            server.broadcastMsg(login + " : " + str);
                         }
                     }
                 } catch (IOException e) {
@@ -74,7 +88,7 @@ public class ClientHandler {
                         e.printStackTrace();
                     }
                     server.unsubscribe(this);
-                    System.out.println("Клиент " + nick + " отключился");
+                    System.out.println("Клиент " + login + " отключился");
                 }
             }).start();
 

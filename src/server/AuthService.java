@@ -17,7 +17,7 @@ public class AuthService {
         }
     }
 
-    public static void disconnect(){
+    public static void disconnect() {
         try {
             connection.close();
         } catch (SQLException e) {
@@ -25,15 +25,15 @@ public class AuthService {
         }
     }
 
-    public static String getNickByLoginAndPass(String login, String password){
-        String sql = String.format("SELECT nickname FROM main\n" +
+    public static Integer getUserIdByLoginAndPass (String login, String password) {
+        String sql = String.format("SELECT id FROM User\n" +
                 "WHERE login = '%s'\n" +
                 "AND password = '%s'", login, password);
 
         try {
-            ResultSet rs =stmt.executeQuery(sql);
-            if(rs.next()){
-                return rs.getString(1);
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.next()) {
+                return rs.getInt(1);
             }
 
         } catch (SQLException e) {
@@ -41,5 +41,28 @@ public class AuthService {
         }
 
         return null;
+    }
+
+    public static boolean renameUser(String oldLogin, String newLogin) {
+        String sql = "SELECT count(id) FROM User WHERE login = '" + newLogin + "'";
+
+        try {
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.getInt(1) != 0) {
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        sql = "UPDATE User SET login = '" + newLogin + "' WHERE login = '" + oldLogin + "'";
+
+        try {
+            return (stmt.executeUpdate(sql) > 0);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }
