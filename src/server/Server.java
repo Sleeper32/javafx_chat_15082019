@@ -47,7 +47,7 @@ public class Server {
 
     public void personalMsg(String name, String msg) {
         for (ClientHandler c: clients) {
-            if (c.nick.equals(name)) {
+            if (c.login.equals(name)) {
                 c.sendMSG(msg);
             }
         }
